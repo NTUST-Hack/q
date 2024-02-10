@@ -2,6 +2,7 @@ use serde_aux::prelude::*;
 use serde_derive::Deserialize;
 use serde_derive::Serialize;
 use std::collections::HashMap;
+use std::time::Duration;
 
 pub struct Q {
     client: reqwest::Client,
@@ -78,10 +79,21 @@ pub struct CourseDetails {
     pub course_content: String,
 }
 
+const DEFAULT_USER_AGENT: &'static str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36";
+const DEFAULT_TIMEOUT: Duration = Duration::from_secs(10);
+
 impl Q {
     pub fn new() -> Self {
+        Q::build(None, None)
+    }
+
+    pub fn build(user_agent: Option<&str>, timeout: Option<Duration>) -> Self {
         Q {
-            client: reqwest::Client::new(),
+            client: reqwest::Client::builder()
+                .user_agent(user_agent.unwrap_or(DEFAULT_USER_AGENT))
+                .timeout(timeout.unwrap_or(DEFAULT_TIMEOUT))
+                .build()
+                .unwrap(),
         }
     }
 
@@ -122,7 +134,7 @@ mod tests {
 
     #[tokio::test]
     async fn query() {
-        let client = Q::new();
+        let client = Q::build(None, None);
 
         let _details = client
             .query("1122", "AT2005701", "zh")
