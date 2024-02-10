@@ -2,6 +2,7 @@ use serde_aux::prelude::*;
 use serde_derive::Deserialize;
 use serde_derive::Serialize;
 use std::collections::HashMap;
+use std::net::IpAddr;
 use std::time::Duration;
 
 pub struct Q {
@@ -84,16 +85,24 @@ const DEFAULT_TIMEOUT: Duration = Duration::from_secs(10);
 
 impl Q {
     pub fn new() -> Self {
-        Q::build(None, None)
+        Q::build(None, None, None)
     }
 
-    pub fn build(user_agent: Option<&str>, timeout: Option<Duration>) -> Self {
+    pub fn build(
+        user_agent: Option<&str>,
+        timeout: Option<Duration>,
+        local_address: Option<IpAddr>,
+    ) -> Self {
+        let mut builder = reqwest::Client::builder()
+            .user_agent(user_agent.unwrap_or(DEFAULT_USER_AGENT))
+            .timeout(timeout.unwrap_or(DEFAULT_TIMEOUT));
+
+        if local_address.is_some() {
+            builder = builder.local_address(local_address.unwrap());
+        }
+
         Q {
-            client: reqwest::Client::builder()
-                .user_agent(user_agent.unwrap_or(DEFAULT_USER_AGENT))
-                .timeout(timeout.unwrap_or(DEFAULT_TIMEOUT))
-                .build()
-                .unwrap(),
+            client: builder.build().unwrap(),
         }
     }
 
@@ -134,7 +143,7 @@ mod tests {
 
     #[tokio::test]
     async fn query() {
-        let client = Q::build(None, None);
+        let client = Q::new();
 
         let _details = client
             .query("1122", "AT2005701", "zh")
