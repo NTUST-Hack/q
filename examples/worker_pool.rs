@@ -6,7 +6,6 @@ use std::{
     time::Duration,
 };
 
-use tokio::sync::Mutex;
 use tokio_task_pool::Pool;
 
 const SEMESTER: &'static str = "1122";
@@ -32,13 +31,15 @@ async fn main() {
     let run = Arc::new(AtomicBool::new(true));
     let run_clone = run.clone();
 
-    let pool = Pool::bounded(THREADS).with_spawn_timeout(Duration::from_millis(10));
+    let pool = Pool::bounded(THREADS).with_spawn_timeout(Duration::from_micros(10));
 
-    let clients = Arc::new(Mutex::new(Vec::<q::Q>::new()));
+    let mut clients = Vec::<q::Q>::new();
 
     for _ in 0..(THREADS + 1) {
-        clients.lock().await.push(q::Q::new());
+        clients.push(q::Q::new());
     }
+
+    let clients = Arc::new(clients);
 
     let courses = vec![
         "AT2005701",
@@ -51,7 +52,7 @@ async fn main() {
         "TCG047301",
     ];
     let courses_length = courses.len();
-    let courses = Arc::new(Mutex::new(courses));
+    let courses = Arc::new(courses);
 
     tokio::spawn(async move {
         let mut i = 0;
@@ -62,11 +63,8 @@ async fn main() {
 
             match pool
                 .spawn(async move {
-                    let clients_binding = clients_clone.lock().await;
-                    let courses_binding = courses_clone.lock().await;
-
-                    let c = clients_binding.get(i % THREADS).unwrap();
-                    let no = courses_binding.get(i % courses_length).unwrap();
+                    let c = clients_clone.get(i % THREADS).unwrap();
+                    let no = courses_clone.get(i % courses_length).unwrap();
 
                     worker(c, no).await;
 
