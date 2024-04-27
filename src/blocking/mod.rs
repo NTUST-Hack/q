@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 use std::time::Duration;
 
-use crate::CourseDetails;
-use crate::QueryError;
+pub use crate::CourseDetails;
+pub use crate::QueryError;
 use crate::DEFAULT_TIMEOUT;
 use crate::DEFAULT_USER_AGENT;
 
