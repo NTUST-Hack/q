@@ -4,6 +4,7 @@ use serde_aux::prelude::*;
 use serde_derive::Deserialize;
 use serde_derive::Serialize;
 use std::collections::HashMap;
+use std::fmt;
 use std::time::Duration;
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -137,28 +138,49 @@ impl Q {
         semester: &str,
         course_no: &str,
         language: &str,
-    ) -> Result<CourseDetails, Box<dyn std::error::Error>> {
+    ) -> Result<CourseDetails, QueryError> {
         let mut params = HashMap::new();
         params.insert("semester", semester);
         params.insert("course_no", course_no);
         params.insert("language", language);
 
-        let resp = self
+        let resp = match self
             .http_client
             .get("https://querycourse.ntust.edu.tw/querycourse/api/coursedetials")
             .query(&params)
             .send()
-            .await?
-            .json::<Vec<CourseDetails>>()
-            .await?;
+            .await
+        {
+            Ok(resp) => resp,
+            Err(e) => return Err(QueryError::HttpError(format!("{}", e))),
+        };
 
-        if let Some(course_details) = resp.get(0) {
+        let json = match resp.json::<Vec<CourseDetails>>().await {
+            Ok(json) => json,
+            Err(e) => return Err(QueryError::ParseError(format!("{}", e))),
+        };
+
+        if let Some(course_details) = json.get(0) {
             Ok(course_details.clone())
         } else {
-            Err(Box::new(std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                "Failed to parse response data",
-            )))
+            Err(QueryError::ParseError(format!("No course found")))
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum QueryError {
+    HttpError(String),
+    ParseError(String),
+}
+
+impl std::error::Error for QueryError {}
+
+impl fmt::Display for QueryError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            QueryError::HttpError(msg) => write!(f, "HTTP Error: {}", msg),
+            QueryError::ParseError(msg) => write!(f, "Parse Error: {}", msg),
         }
     }
 }
