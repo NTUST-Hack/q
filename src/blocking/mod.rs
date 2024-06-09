@@ -1,56 +1,47 @@
-use std::collections::HashMap;
 use std::time::Duration;
 
 pub use crate::CourseDetails;
 pub use crate::QueryError;
-use crate::DEFAULT_TIMEOUT;
-use crate::DEFAULT_USER_AGENT;
+
+use crate::async_impl;
 
 pub struct ClientBuilder<'a> {
-    reqwest_builder: reqwest::blocking::ClientBuilder,
-
-    user_agent: &'a str,
-    timeout: Duration,
+    async_builder: async_impl::ClientBuilder<'a>,
 }
 
 impl<'a> ClientBuilder<'a> {
     pub fn new() -> Self {
-        ClientBuilder {
-            reqwest_builder: reqwest::blocking::ClientBuilder::new(),
-
-            user_agent: DEFAULT_USER_AGENT,
-            timeout: DEFAULT_TIMEOUT,
+        Self {
+            async_builder: async_impl::ClientBuilder::new(),
         }
     }
 
     pub fn user_agent(mut self, user_agent: &'a str) -> Self {
-        self.user_agent = user_agent;
+        self.async_builder = self.async_builder.user_agent(&user_agent);
         self
     }
 
     pub fn timeout(mut self, timeout: Duration) -> Self {
-        self.timeout = timeout;
+        self.async_builder = self.async_builder.timeout(timeout);
         self
     }
 
     pub fn local_address(mut self, addr: std::net::IpAddr) -> Self {
-        self.reqwest_builder = self.reqwest_builder.local_address(addr);
+        self.async_builder = self.async_builder.local_address(addr);
         self
     }
 
     pub fn build(self) -> Result<Q, Box<dyn std::error::Error>> {
         Ok(Q {
-            http_client: self
-                .reqwest_builder
-                .user_agent(self.user_agent)
-                .timeout(self.timeout)
-                .build()?,
+            async_q: self.async_builder.build()?,
+            runtime: tokio::runtime::Runtime::new().unwrap(),
         })
     }
 }
 
 pub struct Q {
-    http_client: reqwest::blocking::Client,
+    async_q: async_impl::Q,
+    runtime: tokio::runtime::Runtime,
 }
 
 impl Q {
@@ -64,31 +55,8 @@ impl Q {
         course_no: &str,
         language: &str,
     ) -> Result<CourseDetails, QueryError> {
-        let mut params = HashMap::new();
-        params.insert("semester", semester);
-        params.insert("course_no", course_no);
-        params.insert("language", language);
-
-        let resp = match self
-            .http_client
-            .get("https://querycourse.ntust.edu.tw/querycourse/api/coursedetials")
-            .query(&params)
-            .send()
-        {
-            Ok(resp) => resp,
-            Err(e) => return Err(QueryError::HttpError(format!("{}", e))),
-        };
-
-        let json = match resp.json::<Vec<CourseDetails>>() {
-            Ok(json) => json,
-            Err(e) => return Err(QueryError::ParseError(format!("{}", e))),
-        };
-
-        if let Some(course_details) = json.get(0) {
-            Ok(course_details.clone())
-        } else {
-            Err(QueryError::ParseError(format!("No course found")))
-        }
+        self.runtime
+            .block_on(self.async_q.query(semester, course_no, language))
     }
 }
 
