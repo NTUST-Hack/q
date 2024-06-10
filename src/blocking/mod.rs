@@ -2,6 +2,7 @@ use std::time::Duration;
 
 pub use crate::CourseDetails;
 pub use crate::QueryError;
+use crate::{CourseInfo, Language, SearchOptions};
 
 use crate::async_impl;
 
@@ -49,11 +50,15 @@ impl Q {
         ClientBuilder::new().build().unwrap()
     }
 
+    pub fn search(&self, options: &SearchOptions) -> Result<Vec<CourseInfo>, QueryError> {
+        self.runtime.block_on(self.async_q.search(options))
+    }
+
     pub fn query(
         &self,
         semester: &str,
         course_no: &str,
-        language: &str,
+        language: Language,
     ) -> Result<CourseDetails, QueryError> {
         self.runtime
             .block_on(self.async_q.query(semester, course_no, language))
@@ -70,11 +75,24 @@ mod tests {
     }
 
     #[test]
+    fn search() {
+        let client = Q::new();
+
+        let mut options = SearchOptions::new("1131", Language::Zh);
+
+        options.course_no = "cs".to_string();
+
+        let _details = client.search(&options).expect("failed to search courses");
+
+        println!("{:#?}", _details);
+    }
+
+    #[test]
     fn query() {
         let client = Q::new();
 
         let _details = client
-            .query("1122", "AT2005701", "zh")
+            .query("1122", "AT2005701", Language::Zh)
             .expect("Failed to query");
 
         println!("{:#?}", _details)

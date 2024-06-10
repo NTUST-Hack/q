@@ -9,7 +9,7 @@ use std::{
 use tokio_task_pool::Pool;
 
 const SEMESTER: &'static str = "1122";
-const LANGUAGE: &'static str = "zh";
+const LANGUAGE: q::Language = q::Language::Zh;
 
 async fn worker(client: &q::Q, course_no: &str) {
     let details = client.query(SEMESTER, course_no, LANGUAGE).await.unwrap();

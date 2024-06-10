@@ -1,7 +1,10 @@
 use std::collections::HashMap;
 use std::time::Duration;
 
-use crate::{CourseDetails, QueryError, DEFAULT_TIMEOUT, DEFAULT_USER_AGENT};
+use crate::{
+    CourseDetails, CourseInfo, Language, QueryError, SearchOptions, DEFAULT_TIMEOUT,
+    DEFAULT_USER_AGENT,
+};
 
 #[derive(Default, Debug)]
 pub struct ClientBuilder<'a> {
@@ -56,16 +59,34 @@ impl Q {
         ClientBuilder::new().build().unwrap()
     }
 
+    pub async fn search(&self, options: &SearchOptions) -> Result<Vec<CourseInfo>, QueryError> {
+        let resp = match self
+            .http_client
+            .post("https://querycourse.ntust.edu.tw/querycourse/api/courses")
+            .json(&options)
+            .send()
+            .await
+        {
+            Ok(resp) => resp,
+            Err(e) => return Err(QueryError::HttpError(format!("{}", e))),
+        };
+
+        match resp.json::<Vec<CourseInfo>>().await {
+            Ok(json) => Ok(json),
+            Err(e) => return Err(QueryError::ParseError(format!("{}", e))),
+        }
+    }
+
     pub async fn query(
         &self,
         semester: &str,
         course_no: &str,
-        language: &str,
+        language: Language,
     ) -> Result<CourseDetails, QueryError> {
         let mut params = HashMap::new();
         params.insert("semester", semester);
         params.insert("course_no", course_no);
-        params.insert("language", language);
+        params.insert("language", language.as_str());
 
         let resp = match self
             .http_client
@@ -101,11 +122,27 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn search() {
+        let client = Q::new();
+
+        let mut options = SearchOptions::new("1131", Language::Zh);
+
+        options.course_no = "cs".to_string();
+
+        let _details = client
+            .search(&options)
+            .await
+            .expect("failed to search courses");
+
+        println!("{:#?}", _details);
+    }
+
+    #[tokio::test]
     async fn query() {
         let client = Q::new();
 
         let _details = client
-            .query("1122", "AT2005701", "zh")
+            .query("1122", "AT2005701", Language::Zh)
             .await
             .expect("Failed to query");
 

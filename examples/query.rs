@@ -5,7 +5,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let c = Q::new();
 
     let details = c
-        .query("1122", "AT2005701", "en")
+        .query("1131", "TCG046301", q::Language::Zh)
         .await
         .expect("failed to query course description");
 
