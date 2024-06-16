@@ -50,8 +50,13 @@ impl Q {
         ClientBuilder::new().build().unwrap()
     }
 
-    pub fn search(&self, options: &SearchOptions) -> Result<Vec<CourseInfo>, QueryError> {
-        self.runtime.block_on(self.async_q.search(options))
+    pub fn search(
+        &self,
+        options: &SearchOptions,
+        merge_courses: bool,
+    ) -> Result<Vec<CourseInfo>, QueryError> {
+        self.runtime
+            .block_on(self.async_q.search(options, merge_courses))
     }
 
     pub fn query(
@@ -82,7 +87,9 @@ mod tests {
 
         options.course_no = "cs".to_string();
 
-        let _details = client.search(&options).expect("failed to search courses");
+        let _details = client
+            .search(&options, true)
+            .expect("failed to search courses");
 
         println!("{:#?}", _details);
     }
@@ -106,7 +113,9 @@ mod tests {
 
         options.course_no = "cs".to_string();
 
-        let search_results = client.search(&options).expect("failed to search courses");
+        let search_results = client
+            .search(&options, true)
+            .expect("failed to search courses");
 
         let _ = search_results.iter().for_each(|c| {
             let query_client = Q::new();

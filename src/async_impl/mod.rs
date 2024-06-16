@@ -59,7 +59,11 @@ impl Q {
         ClientBuilder::new().build().unwrap()
     }
 
-    pub async fn search(&self, options: &SearchOptions) -> Result<Vec<CourseInfo>, QueryError> {
+    pub async fn search(
+        &self,
+        options: &SearchOptions,
+        merge_courses: bool,
+    ) -> Result<Vec<CourseInfo>, QueryError> {
         let resp = match self
             .http_client
             .post("https://querycourse.ntust.edu.tw/querycourse/api/courses")
@@ -72,7 +76,11 @@ impl Q {
         };
 
         match resp.json::<Vec<CourseInfo>>().await {
-            Ok(json) => Ok(json),
+            Ok(json) => Ok(if merge_courses {
+                crate::merge_courses(json)
+            } else {
+                json
+            }),
             Err(e) => return Err(QueryError::ParseError(format!("{}", e))),
         }
     }
@@ -145,7 +153,7 @@ mod tests {
         options.course_no = "cs".to_string();
 
         let _details = client
-            .search(&options)
+            .search(&options, true)
             .await
             .expect("failed to search courses");
 
@@ -173,7 +181,7 @@ mod tests {
         options.course_no = "cs".to_string();
 
         let search_results = client
-            .search(&options)
+            .search(&options, true)
             .await
             .expect("failed to search courses");
 

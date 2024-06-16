@@ -8,7 +8,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     options.course_no = "cs".to_string();
 
-    let details = c.search(&options).await.expect("failed to search courses");
+    let details = c
+        .search(&options, true)
+        .await
+        .expect("failed to search courses");
 
     println!("{:#?}", details);
 

@@ -4,7 +4,7 @@ pub mod blocking;
 
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, BoolFromInt};
-use std::{fmt, str::FromStr, time::Duration};
+use std::{collections::HashMap, fmt, str::FromStr, time::Duration};
 
 pub const DEFAULT_USER_AGENT: &'static str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36";
 pub const DEFAULT_TIMEOUT: Duration = Duration::from_secs(10);
@@ -195,6 +195,38 @@ impl SearchOptions {
     }
 }
 
+fn merge_courses(courses: Vec<CourseInfo>) -> Vec<CourseInfo> {
+    let mut course_map: HashMap<String, CourseInfo> = HashMap::new();
+
+    for course in courses.into_iter() {
+        course_map
+            .entry(course.course_no.clone())
+            .and_modify(|existing_course| {
+                if let Some(new_nodes) = &course.node {
+                    if let Some(existing_nodes) = &mut existing_course.node {
+                        existing_nodes.push(',');
+                        existing_nodes.push_str(new_nodes);
+                    } else {
+                        existing_course.node = Some(new_nodes.clone());
+                    }
+                }
+            })
+            .or_insert(course);
+    }
+
+    // ensure nodes are unique and in order
+    for course in course_map.values_mut() {
+        if let Some(nodes) = &mut course.node {
+            let mut nodes_vec: Vec<&str> = nodes.split(',').collect();
+            nodes_vec.sort();
+            nodes_vec.dedup();
+            *nodes = nodes_vec.join(",");
+        }
+    }
+
+    course_map.into_values().collect()
+}
+
 #[derive(Debug, Clone)]
 pub enum QueryError {
     HttpError(String),
@@ -209,5 +241,72 @@ impl fmt::Display for QueryError {
             QueryError::HttpError(msg) => write!(f, "HTTP Error: {}", msg),
             QueryError::ParseError(msg) => write!(f, "Parse Error: {}", msg),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn merge_courses() {
+        let courses: Vec<CourseInfo> = vec![
+            CourseInfo {
+                semester: String::from("1131"),
+                course_no: String::from("CS1003302"),
+                course_name: String::from("計算機程式設計"),
+                course_teacher: String::from("金台齡"),
+                dimension: String::from(""),
+                credit_point: 3.0,
+                require_option: String::from("R"),
+                all_year: String::from("H"),
+                choose_student: 0,
+                restrict1: 9999,
+                restrict2: 53,
+                three_student: 0,
+                all_student: 0,
+                nturestrict: 0,
+                ntnurestrict: 0,
+                course_times: String::from("3"),
+                practical_times: String::from("0"),
+                class_room_no: None,
+                three_node: None,
+                node: Some(String::from("R1")),
+                contents: String::from("學號雙數／EMI課程／英語授課"),
+                ntu_people: 0,
+                ntnu_people: 0,
+                abroad_people: 0,
+            },
+            CourseInfo {
+                semester: String::from("1131"),
+                course_no: String::from("CS1003302"),
+                course_name: String::from("計算機程式設計"),
+                course_teacher: String::from("金台齡"),
+                dimension: String::from(""),
+                credit_point: 3.0,
+                require_option: String::from("R"),
+                all_year: String::from("H"),
+                choose_student: 0,
+                restrict1: 9999,
+                restrict2: 53,
+                three_student: 0,
+                all_student: 0,
+                nturestrict: 0,
+                ntnurestrict: 0,
+                course_times: String::from("3"),
+                practical_times: String::from("0"),
+                class_room_no: None,
+                three_node: None,
+                node: Some(String::from("T1,T2")),
+                contents: String::from("學號雙數／EMI課程／英語授課"),
+                ntu_people: 0,
+                ntnu_people: 0,
+                abroad_people: 0,
+            },
+        ];
+
+        let merged_courses = crate::merge_courses(courses);
+
+        println!("{:#?}", merged_courses);
     }
 }
