@@ -46,14 +46,14 @@ pub struct CourseInfo {
     pub course_name: String,
     pub course_teacher: String,
     pub dimension: String,
-    #[serde_as(as = "serde_with::DisplayFromStr")]
+    #[serde_as(deserialize_as = "serde_with::DisplayFromStr")]
     pub credit_point: f32,
     pub require_option: String,
     pub all_year: String,
     pub choose_student: i32,
-    #[serde_as(as = "serde_with::DisplayFromStr")]
+    #[serde_as(deserialize_as = "serde_with::DisplayFromStr")]
     pub restrict1: i32,
-    #[serde_as(as = "serde_with::DisplayFromStr")]
+    #[serde_as(deserialize_as = "serde_with::DisplayFromStr")]
     pub restrict2: i32,
     pub three_student: i32,
     pub all_student: i32,
@@ -87,23 +87,23 @@ pub struct CourseDetails {
     pub course_no: String,
     pub course_name: String,
     pub course_teacher: String,
-    #[serde_as(as = "serde_with::DisplayFromStr")]
+    #[serde_as(deserialize_as = "serde_with::DisplayFromStr")]
     pub credit_point: f32,
-    #[serde_as(as = "serde_with::DisplayFromStr")]
+    #[serde_as(deserialize_as = "serde_with::DisplayFromStr")]
     pub course_times: i32,
-    #[serde_as(as = "serde_with::DisplayFromStr")]
+    #[serde_as(deserialize_as = "serde_with::DisplayFromStr")]
     pub practical_times: i32,
     pub require_option: String,
     pub all_year: String,
-    #[serde_as(as = "serde_with::DisplayFromStr")]
+    #[serde_as(deserialize_as = "serde_with::DisplayFromStr")]
     pub choose_student: i32,
-    #[serde_as(as = "serde_with::DisplayFromStr")]
+    #[serde_as(deserialize_as = "serde_with::DisplayFromStr")]
     pub three_student: i32,
-    #[serde_as(as = "serde_with::DisplayFromStr")]
+    #[serde_as(deserialize_as = "serde_with::DisplayFromStr")]
     pub all_student: i32,
-    #[serde_as(as = "serde_with::DisplayFromStr")]
+    #[serde_as(deserialize_as = "serde_with::DisplayFromStr")]
     pub restrict1: i32,
-    #[serde_as(as = "serde_with::DisplayFromStr")]
+    #[serde_as(deserialize_as = "serde_with::DisplayFromStr")]
     pub restrict2: i32,
     #[serde(rename(serialize = "ntuRestrict", deserialize = "NTURestrict"))]
     #[serde_as(deserialize_as = "serde_with::DefaultOnError")]
@@ -133,16 +133,16 @@ pub struct CourseDetails {
     #[serde_as(as = "serde_with::NoneAsEmptyString")]
     pub course_remark: Option<String>,
     #[serde(rename(deserialize = "Instruction_1"))]
-    #[serde_as(as = "Option<serde_with::DisplayFromStr>")]
+    #[serde_as(deserialize_as = "Option<serde_with::DisplayFromStr>")]
     pub instruction_1: Option<i32>,
     #[serde(rename(deserialize = "Instruction_2"))]
-    #[serde_as(as = "Option<serde_with::DisplayFromStr>")]
+    #[serde_as(deserialize_as = "Option<serde_with::DisplayFromStr>")]
     pub instruction_2: Option<i32>,
     #[serde(rename(deserialize = "Instruction_3"))]
-    #[serde_as(as = "Option<serde_with::DisplayFromStr>")]
+    #[serde_as(deserialize_as = "Option<serde_with::DisplayFromStr>")]
     pub instruction_3: Option<i32>,
     #[serde(rename(deserialize = "Instruction_4"))]
-    #[serde_as(as = "Option<serde_with::DisplayFromStr>")]
+    #[serde_as(deserialize_as = "Option<serde_with::DisplayFromStr>")]
     pub instruction_4: Option<i32>,
     #[serde(rename(deserialize = "Instruction_other"))]
     #[serde_as(as = "serde_with::NoneAsEmptyString")]
