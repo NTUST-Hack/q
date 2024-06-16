@@ -39,7 +39,7 @@ impl Language {
 
 #[serde_as]
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "PascalCase")]
+#[serde(rename_all(serialize = "camelCase", deserialize = "PascalCase"))]
 pub struct CourseInfo {
     pub semester: String,
     pub course_no: String,
@@ -57,10 +57,10 @@ pub struct CourseInfo {
     pub restrict2: i32,
     pub three_student: i32,
     pub all_student: i32,
-    #[serde(rename = "NTURestrict")]
+    #[serde(rename(serialize = "NTURestrict", deserialize = "NTURestrict"))]
     #[serde_as(deserialize_as = "serde_with::DefaultOnError")]
     pub nturestrict: i32,
-    #[serde(rename = "NTNURestrict")]
+    #[serde(rename(serialize = "NTNURestrict", deserialize = "NTNURestrict"))]
     #[serde_as(deserialize_as = "serde_with::DefaultOnError")]
     pub ntnurestrict: i32,
     pub course_times: String,
@@ -72,16 +72,16 @@ pub struct CourseInfo {
     #[serde(default)]
     pub node: Option<String>,
     pub contents: String,
-    #[serde(rename = "NTU_People")]
+    #[serde(rename(serialize = "NTUPeople", deserialize = "NTU_People"))]
     pub ntu_people: i32,
-    #[serde(rename = "NTNU_People")]
+    #[serde(rename(serialize = "NTNUPeople", deserialize = "NTNU_People"))]
     pub ntnu_people: i32,
     pub abroad_people: i32,
 }
 
 #[serde_as]
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "PascalCase")]
+#[serde(rename_all(serialize = "camelCase", deserialize = "PascalCase"))]
 pub struct CourseDetails {
     pub semester: String,
     pub course_no: String,
@@ -105,17 +105,17 @@ pub struct CourseDetails {
     pub restrict1: i32,
     #[serde_as(as = "serde_with::DisplayFromStr")]
     pub restrict2: i32,
-    #[serde(rename = "NTURestrict")]
+    #[serde(rename(serialize = "NTURestrict", deserialize = "NTURestrict"))]
     #[serde_as(deserialize_as = "serde_with::DefaultOnError")]
     pub nturestrict: i32,
-    #[serde(rename = "NTNURestrict")]
+    #[serde(rename(serialize = "NTNURestrict", deserialize = "NTNURestrict"))]
     #[serde_as(deserialize_as = "serde_with::DefaultOnError")]
     pub ntnurestrict: Option<i32>,
     #[serde_as(as = "serde_with::NoneAsEmptyString")]
     pub class_room_no: Option<String>,
     #[serde_as(as = "serde_with::NoneAsEmptyString")]
     pub core_ability: Option<String>,
-    #[serde(rename = "CourseURL")]
+    #[serde(rename(deserialize = "CourseURL"))]
     #[serde_as(as = "serde_with::NoneAsEmptyString")]
     pub course_url: Option<String>,
     #[serde_as(as = "serde_with::NoneAsEmptyString")]
@@ -132,26 +132,26 @@ pub struct CourseDetails {
     pub course_grading: Option<String>,
     #[serde_as(as = "serde_with::NoneAsEmptyString")]
     pub course_remark: Option<String>,
-    #[serde(rename = "Instruction_1")]
+    #[serde(rename(deserialize = "Instruction_1"))]
     #[serde_as(as = "Option<serde_with::DisplayFromStr>")]
     pub instruction_1: Option<i32>,
-    #[serde(rename = "Instruction_2")]
+    #[serde(rename(deserialize = "Instruction_2"))]
     #[serde_as(as = "Option<serde_with::DisplayFromStr>")]
     pub instruction_2: Option<i32>,
-    #[serde(rename = "Instruction_3")]
+    #[serde(rename(deserialize = "Instruction_3"))]
     #[serde_as(as = "Option<serde_with::DisplayFromStr>")]
     pub instruction_3: Option<i32>,
-    #[serde(rename = "Instruction_4")]
+    #[serde(rename(deserialize = "Instruction_4"))]
     #[serde_as(as = "Option<serde_with::DisplayFromStr>")]
     pub instruction_4: Option<i32>,
-    #[serde(rename = "Instruction_other")]
+    #[serde(rename(deserialize = "Instruction_other"))]
     #[serde_as(as = "serde_with::NoneAsEmptyString")]
     pub instruction_other: Option<String>,
 }
 
 #[serde_as]
 #[derive(Debug, Clone, Deserialize, Serialize)]
-#[serde(rename_all = "PascalCase")]
+#[serde(rename_all(serialize = "camelCase", deserialize = "PascalCase"))]
 pub struct SearchOptions {
     pub semester: String,
     pub course_no: String,
@@ -164,7 +164,8 @@ pub struct SearchOptions {
     #[serde_as(as = "BoolFromInt")]
     pub only_general: bool,
     #[serde_as(as = "BoolFromInt")]
-    #[serde(rename = "OnleyNTUST")] // looks like a low-level naming mistake in the API
+    #[serde(rename(serialize = "OnlyNTUST", deserialize = "OnleyNTUST"))]
+    // looks like a low-level naming mistake in the API
     pub only_ntust: bool,
     #[serde_as(as = "BoolFromInt")]
     pub only_master: bool,
