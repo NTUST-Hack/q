@@ -195,7 +195,7 @@ impl SearchOptions {
     }
 }
 
-fn merge_courses(courses: Vec<CourseInfo>) -> Vec<CourseInfo> {
+pub fn merge_courses(courses: Vec<CourseInfo>) -> Vec<CourseInfo> {
     let mut course_map: HashMap<String, CourseInfo> = HashMap::new();
 
     for course in courses.into_iter() {
