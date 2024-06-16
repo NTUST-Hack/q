@@ -57,10 +57,10 @@ pub struct CourseInfo {
     pub restrict2: i32,
     pub three_student: i32,
     pub all_student: i32,
-    #[serde(rename(serialize = "NTURestrict", deserialize = "NTURestrict"))]
+    #[serde(rename(serialize = "ntuRestrict", deserialize = "NTURestrict"))]
     #[serde_as(deserialize_as = "serde_with::DefaultOnError")]
     pub nturestrict: i32,
-    #[serde(rename(serialize = "NTNURestrict", deserialize = "NTNURestrict"))]
+    #[serde(rename(serialize = "ntnuRestrict", deserialize = "NTNURestrict"))]
     #[serde_as(deserialize_as = "serde_with::DefaultOnError")]
     pub ntnurestrict: i32,
     pub course_times: String,
@@ -72,9 +72,9 @@ pub struct CourseInfo {
     #[serde(default)]
     pub node: Option<String>,
     pub contents: String,
-    #[serde(rename(serialize = "NTUPeople", deserialize = "NTU_People"))]
+    #[serde(rename(serialize = "ntuPeople", deserialize = "NTU_People"))]
     pub ntu_people: i32,
-    #[serde(rename(serialize = "NTNUPeople", deserialize = "NTNU_People"))]
+    #[serde(rename(serialize = "ntnuPeople", deserialize = "NTNU_People"))]
     pub ntnu_people: i32,
     pub abroad_people: i32,
 }
@@ -105,10 +105,10 @@ pub struct CourseDetails {
     pub restrict1: i32,
     #[serde_as(as = "serde_with::DisplayFromStr")]
     pub restrict2: i32,
-    #[serde(rename(serialize = "NTURestrict", deserialize = "NTURestrict"))]
+    #[serde(rename(serialize = "ntuRestrict", deserialize = "NTURestrict"))]
     #[serde_as(deserialize_as = "serde_with::DefaultOnError")]
     pub nturestrict: i32,
-    #[serde(rename(serialize = "NTNURestrict", deserialize = "NTNURestrict"))]
+    #[serde(rename(serialize = "ntnuRestrict", deserialize = "NTNURestrict"))]
     #[serde_as(deserialize_as = "serde_with::DefaultOnError")]
     pub ntnurestrict: Option<i32>,
     #[serde_as(as = "serde_with::NoneAsEmptyString")]
