@@ -111,26 +111,26 @@ pub struct CourseDetails {
     #[serde(rename(serialize = "ntnuRestrict", deserialize = "NTNURestrict"))]
     #[serde_as(deserialize_as = "serde_with::DefaultOnError")]
     pub ntnurestrict: Option<i32>,
-    #[serde_as(as = "serde_with::NoneAsEmptyString")]
+    #[serde_as(deserialize_as = "serde_with::NoneAsEmptyString")]
     pub class_room_no: Option<String>,
-    #[serde_as(as = "serde_with::NoneAsEmptyString")]
+    #[serde_as(deserialize_as = "serde_with::NoneAsEmptyString")]
     pub core_ability: Option<String>,
     #[serde(rename(deserialize = "CourseURL"))]
-    #[serde_as(as = "serde_with::NoneAsEmptyString")]
+    #[serde_as(deserialize_as = "serde_with::NoneAsEmptyString")]
     pub course_url: Option<String>,
-    #[serde_as(as = "serde_with::NoneAsEmptyString")]
+    #[serde_as(deserialize_as = "serde_with::NoneAsEmptyString")]
     pub course_object: Option<String>,
-    #[serde_as(as = "serde_with::NoneAsEmptyString")]
+    #[serde_as(deserialize_as = "serde_with::NoneAsEmptyString")]
     pub course_content: Option<String>,
-    #[serde_as(as = "serde_with::NoneAsEmptyString")]
+    #[serde_as(deserialize_as = "serde_with::NoneAsEmptyString")]
     pub course_textbook: Option<String>,
-    #[serde_as(as = "serde_with::NoneAsEmptyString")]
+    #[serde_as(deserialize_as = "serde_with::NoneAsEmptyString")]
     pub course_refbook: Option<String>,
-    #[serde_as(as = "serde_with::NoneAsEmptyString")]
+    #[serde_as(deserialize_as = "serde_with::NoneAsEmptyString")]
     pub course_note: Option<String>,
-    #[serde_as(as = "serde_with::NoneAsEmptyString")]
+    #[serde_as(deserialize_as = "serde_with::NoneAsEmptyString")]
     pub course_grading: Option<String>,
-    #[serde_as(as = "serde_with::NoneAsEmptyString")]
+    #[serde_as(deserialize_as = "serde_with::NoneAsEmptyString")]
     pub course_remark: Option<String>,
     #[serde(rename(deserialize = "Instruction_1"))]
     #[serde_as(deserialize_as = "Option<serde_with::DisplayFromStr>")]
@@ -145,7 +145,7 @@ pub struct CourseDetails {
     #[serde_as(deserialize_as = "Option<serde_with::DisplayFromStr>")]
     pub instruction_4: Option<i32>,
     #[serde(rename(deserialize = "Instruction_other"))]
-    #[serde_as(as = "serde_with::NoneAsEmptyString")]
+    #[serde_as(deserialize_as = "serde_with::NoneAsEmptyString")]
     pub instruction_other: Option<String>,
 }
 
