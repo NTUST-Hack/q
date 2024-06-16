@@ -9,7 +9,7 @@ use std::{fmt, str::FromStr, time::Duration};
 pub const DEFAULT_USER_AGENT: &'static str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36";
 pub const DEFAULT_TIMEOUT: Duration = Duration::from_secs(10);
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Language {
     Zh,
@@ -111,7 +111,8 @@ pub struct CourseDetails {
     #[serde(rename = "NTNURestrict")]
     #[serde_as(as = "serde_with::DisplayFromStr")]
     pub ntnurestrict: i32,
-    pub class_room_no: String,
+    #[serde_as(as = "serde_with::NoneAsEmptyString")]
+    pub class_room_no: Option<String>,
     #[serde_as(as = "serde_with::NoneAsEmptyString")]
     pub core_ability: Option<String>,
     #[serde(rename = "CourseURL")]
@@ -189,7 +190,7 @@ impl SearchOptions {
             only_master: false,
             only_under_graduate: false,
             only_node: false,
-            language: language,
+            language,
         }
     }
 }
