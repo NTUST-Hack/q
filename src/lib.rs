@@ -106,11 +106,11 @@ pub struct CourseDetails {
     #[serde_as(as = "serde_with::DisplayFromStr")]
     pub restrict2: i32,
     #[serde(rename = "NTURestrict")]
-    #[serde_as(as = "serde_with::DisplayFromStr")]
+    #[serde_as(deserialize_as = "serde_with::DefaultOnError")]
     pub nturestrict: i32,
     #[serde(rename = "NTNURestrict")]
-    #[serde_as(as = "serde_with::DisplayFromStr")]
-    pub ntnurestrict: i32,
+    #[serde_as(deserialize_as = "serde_with::DefaultOnError")]
+    pub ntnurestrict: Option<i32>,
     #[serde_as(as = "serde_with::NoneAsEmptyString")]
     pub class_room_no: Option<String>,
     #[serde_as(as = "serde_with::NoneAsEmptyString")]
