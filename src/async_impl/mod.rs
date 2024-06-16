@@ -99,7 +99,21 @@ impl Q {
             Err(e) => return Err(QueryError::HttpError(format!("{}", e))),
         };
 
-        let json = match resp.json::<Vec<CourseDetails>>().await {
+        let full = match resp.bytes().await {
+            Ok(bytes) => bytes,
+            Err(e) => return Err(QueryError::ParseError(format!("{}", e))),
+        };
+
+        // # debug
+
+        // let text = match String::from_utf8(full.to_vec()) {
+        //     Ok(bytes) => bytes,
+        //     Err(e) => return Err(QueryError::ParseError(format!("{}", e))),
+        // };
+
+        // println!("{}", text);
+
+        let json = match serde_json::from_slice::<Vec<CourseDetails>>(&full) {
             Ok(json) => json,
             Err(e) => return Err(QueryError::ParseError(format!("{}", e))),
         };
@@ -115,6 +129,7 @@ impl Q {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use futures::future::join_all;
 
     #[tokio::test]
     async fn new() {
@@ -147,5 +162,31 @@ mod tests {
             .expect("Failed to query");
 
         println!("{:#?}", _details)
+    }
+
+    #[tokio::test]
+    async fn query_all_cs() {
+        let client = Q::new();
+
+        let mut options = SearchOptions::new("1131", Language::Zh);
+
+        options.course_no = "cs".to_string();
+
+        let search_results = client
+            .search(&options)
+            .await
+            .expect("failed to search courses");
+
+        let futures = search_results.into_iter().map(|c| async move {
+            let query_client = Q::new();
+            let details = query_client
+                .query(&c.semester, &c.course_no, Language::Zh)
+                .await
+                .expect("Failed to query");
+
+            println!("{:#?}", details);
+        });
+
+        join_all(futures).await;
     }
 }
