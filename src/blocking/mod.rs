@@ -97,4 +97,25 @@ mod tests {
 
         println!("{:#?}", _details)
     }
+
+    #[test]
+    fn query_all_cs() {
+        let client = Q::new();
+
+        let mut options = SearchOptions::new("1131", Language::Zh);
+
+        options.course_no = "cs".to_string();
+
+        let search_results = client.search(&options).expect("failed to search courses");
+
+        let _ = search_results.iter().for_each(|c| {
+            let query_client = Q::new();
+
+            let details = query_client
+                .query(&c.semester, &c.course_no, Language::Zh)
+                .expect("Failed to query");
+
+            println!("{:#?}", details)
+        });
+    }
 }
