@@ -1,6 +1,4 @@
-# q
-
-NTUST Query Course Library
+# NTUST Query Course Library
 
 ## Example
 
