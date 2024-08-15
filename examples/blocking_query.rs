@@ -1,12 +1,10 @@
-use q::Q;
+use q::blocking::Q;
 
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
+fn main() -> anyhow::Result<()> {
     let c = Q::new();
 
     let details = c
-        .query("1131", "TCG046301", q::Language::Zh)
-        .await
+        .query("1122", "AT2005701", q::Language::En)
         .expect("failed to query course description");
 
     println!("{:#?}", details);

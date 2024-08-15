@@ -1,88 +1,65 @@
-use std::collections::HashMap;
-use std::time::Duration;
+pub use crate::CourseDetails;
+pub use crate::QueryError;
+use crate::{CourseInfo, Language, SearchOptions};
 
-use crate::CourseDetails;
-use crate::DEFAULT_TIMEOUT;
-use crate::DEFAULT_USER_AGENT;
+use crate::async_impl;
 
-pub struct ClientBuilder<'a> {
-    reqwest_builder: reqwest::blocking::ClientBuilder,
-
-    user_agent: &'a str,
-    timeout: Duration,
+pub struct ClientBuilder {
+    async_builder: async_impl::ClientBuilder,
 }
 
-impl<'a> ClientBuilder<'a> {
+impl ClientBuilder {
     pub fn new() -> Self {
-        ClientBuilder {
-            reqwest_builder: reqwest::blocking::ClientBuilder::new(),
-
-            user_agent: DEFAULT_USER_AGENT,
-            timeout: DEFAULT_TIMEOUT,
+        Self {
+            async_builder: async_impl::ClientBuilder::new(),
         }
     }
 
-    pub fn user_agent(mut self, user_agent: &'a str) -> Self {
-        self.user_agent = user_agent;
+    pub fn reqwest_client(mut self, client: reqwest::Client) -> Self {
+        self.async_builder = self.async_builder.reqwest_client(client);
         self
     }
 
-    pub fn timeout(mut self, timeout: Duration) -> Self {
-        self.timeout = timeout;
+    pub fn api_url(mut self, url: url::Url) -> Self {
+        self.async_builder = self.async_builder.api_url(url);
         self
     }
 
-    pub fn local_address(mut self, addr: std::net::IpAddr) -> Self {
-        self.reqwest_builder = self.reqwest_builder.local_address(addr);
-        self
-    }
-
-    pub fn build(self) -> Result<Q, Box<dyn std::error::Error>> {
-        Ok(Q {
-            http_client: self
-                .reqwest_builder
-                .user_agent(self.user_agent)
-                .timeout(self.timeout)
-                .build()?,
-        })
+    pub fn build(self) -> Q {
+        Q {
+            async_q: self.async_builder.build(),
+            runtime: tokio::runtime::Runtime::new().unwrap(),
+        }
     }
 }
 
 pub struct Q {
-    http_client: reqwest::blocking::Client,
+    async_q: async_impl::Q,
+    runtime: tokio::runtime::Runtime,
 }
 
 impl Q {
     pub fn new() -> Self {
-        ClientBuilder::new().build().unwrap()
+        ClientBuilder::new().build()
+    }
+
+    pub fn search(
+        &self,
+        options: &SearchOptions,
+        merge_courses: bool,
+    ) -> Result<Vec<CourseInfo>, QueryError> {
+        self.runtime
+            .block_on(self.async_q.search(options, merge_courses))
     }
 
     pub fn query(
         &self,
         semester: &str,
         course_no: &str,
-        language: &str,
-    ) -> Result<CourseDetails, Box<dyn std::error::Error>> {
-        let mut params = HashMap::new();
-        params.insert("semester", semester);
-        params.insert("course_no", course_no);
-        params.insert("language", language);
-
-        let resp = self
-            .http_client
-            .get("https://querycourse.ntust.edu.tw/querycourse/api/coursedetials")
-            .query(&params)
-            .send()?
-            .json::<Vec<CourseDetails>>()?;
-
-        if let Some(course_details) = resp.get(0) {
-            Ok(course_details.clone())
-        } else {
-            Err(Box::new(std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                "Failed to parse response data",
-            )))
-        }
+        language: Language,
+    ) -> Result<CourseDetails, QueryError> {
+        self.runtime
+            .block_on(self.async_q.query(semester, course_no, language))
     }
 }
 
@@ -96,13 +73,51 @@ mod tests {
     }
 
     #[test]
+    fn search() {
+        let client = Q::new();
+
+        let mut options = SearchOptions::new("1131", Language::Zh);
+
+        options.course_no = "cs".to_string();
+
+        let _details = client
+            .search(&options, true)
+            .expect("failed to search courses");
+
+        println!("{:#?}", _details);
+    }
+
+    #[test]
     fn query() {
         let client = Q::new();
 
         let _details = client
-            .query("1122", "AT2005701", "zh")
+            .query("1122", "AT2005701", Language::Zh)
             .expect("Failed to query");
 
         println!("{:#?}", _details)
+    }
+
+    #[test]
+    fn query_all_cs() {
+        let client = Q::new();
+
+        let mut options = SearchOptions::new("1131", Language::Zh);
+
+        options.course_no = "cs".to_string();
+
+        let search_results = client
+            .search(&options, true)
+            .expect("failed to search courses");
+
+        let _ = search_results.iter().for_each(|c| {
+            let query_client = Q::new();
+
+            let details = query_client
+                .query(&c.semester, &c.course_no, Language::Zh)
+                .expect("Failed to query");
+
+            println!("{:#?}", details)
+        });
     }
 }

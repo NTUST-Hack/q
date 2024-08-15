@@ -1,164 +1,255 @@
+mod async_impl;
+pub use self::async_impl::*;
 pub mod blocking;
 
-use serde_aux::prelude::*;
-use serde_derive::Deserialize;
-use serde_derive::Serialize;
-use std::collections::HashMap;
-use std::time::Duration;
+use serde::{Deserialize, Serialize};
+use serde_with::{serde_as, BoolFromInt};
+use std::{collections::HashMap, fmt, str::FromStr, time::Duration};
 
+pub const DEFAULT_USER_AGENT: &'static str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36";
+pub const DEFAULT_TIMEOUT: Duration = Duration::from_secs(10);
+pub const DEFAULT_API_URL: &'static str = "https://querycourse.ntust.edu.tw/querycourse/api/";
+
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Language {
+    Zh,
+    En,
+}
+
+impl FromStr for Language {
+    type Err = ();
+
+    fn from_str(input: &str) -> Result<Language, Self::Err> {
+        match input {
+            "zh" => Ok(Language::Zh),
+            "en" => Ok(Language::En),
+            _ => Err(()),
+        }
+    }
+}
+
+impl Language {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Language::Zh => "zh",
+            Language::En => "en",
+        }
+    }
+}
+
+#[serde_as]
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CourseDetails {
-    #[serde(rename = "Semester")]
+#[serde(rename_all(serialize = "camelCase", deserialize = "PascalCase"))]
+pub struct CourseInfo {
     pub semester: String,
-    #[serde(rename = "CourseNo")]
     pub course_no: String,
-    #[serde(rename = "CourseName")]
     pub course_name: String,
-    #[serde(rename = "CourseTeacher")]
     pub course_teacher: String,
-    #[serde(
-        rename = "CreditPoint",
-        deserialize_with = "deserialize_number_from_string"
-    )]
+    pub dimension: String,
+    #[serde_as(deserialize_as = "serde_with::DisplayFromStr")]
     pub credit_point: f32,
-    #[serde(rename = "CourseTimes")]
-    pub course_times: String,
-    #[serde(rename = "PracticalTimes")]
-    pub practical_times: String,
-    #[serde(rename = "RequireOption")]
     pub require_option: String,
-    #[serde(rename = "AllYear")]
     pub all_year: String,
-    #[serde(
-        rename = "ChooseStudent",
-        deserialize_with = "deserialize_number_from_string"
-    )]
     pub choose_student: i32,
-    #[serde(
-        rename = "ThreeStudent",
-        deserialize_with = "deserialize_number_from_string"
-    )]
-    pub three_student: i32,
-    #[serde(
-        rename = "AllStudent",
-        deserialize_with = "deserialize_number_from_string"
-    )]
-    pub all_student: i32,
-    #[serde(
-        rename = "Restrict1",
-        deserialize_with = "deserialize_number_from_string"
-    )]
+    #[serde_as(deserialize_as = "serde_with::DisplayFromStr")]
     pub restrict1: i32,
-    #[serde(
-        rename = "Restrict2",
-        deserialize_with = "deserialize_number_from_string"
-    )]
+    #[serde_as(deserialize_as = "serde_with::DisplayFromStr")]
     pub restrict2: i32,
-    #[serde(
-        rename = "NTURestrict",
-        deserialize_with = "deserialize_number_from_string"
-    )]
+    pub three_student: i32,
+    pub all_student: i32,
+    #[serde(rename(serialize = "ntuRestrict", deserialize = "NTURestrict"))]
+    #[serde_as(deserialize_as = "serde_with::DefaultOnError")]
     pub nturestrict: i32,
-    #[serde(
-        rename = "NTNURestrict",
-        deserialize_with = "deserialize_number_from_string"
-    )]
+    #[serde(rename(serialize = "ntnuRestrict", deserialize = "NTNURestrict"))]
+    #[serde_as(deserialize_as = "serde_with::DefaultOnError")]
     pub ntnurestrict: i32,
-    #[serde(rename = "ClassRoomNo")]
-    pub class_room_no: String,
-    #[serde(rename = "CoreAbility")]
-    pub core_ability: String,
-    #[serde(rename = "CourseURL")]
-    pub course_url: String,
-    #[serde(rename = "CourseObject")]
-    pub course_object: String,
-    #[serde(rename = "CourseContent")]
-    pub course_content: String,
+    pub course_times: String,
+    pub practical_times: String,
+    #[serde(default)]
+    pub class_room_no: Option<String>,
+    #[serde(default)]
+    pub three_node: Option<String>,
+    #[serde(default)]
+    pub node: Option<String>,
+    pub contents: String,
+    #[serde(rename(serialize = "ntuPeople", deserialize = "NTU_People"))]
+    pub ntu_people: i32,
+    #[serde(rename(serialize = "ntnuPeople", deserialize = "NTNU_People"))]
+    pub ntnu_people: i32,
+    pub abroad_people: i32,
 }
 
-const DEFAULT_USER_AGENT: &'static str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36";
-const DEFAULT_TIMEOUT: Duration = Duration::from_secs(10);
-
-pub struct ClientBuilder<'a> {
-    reqwest_builder: reqwest::ClientBuilder,
-
-    user_agent: &'a str,
-    timeout: Duration,
+#[serde_as]
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase", deserialize = "PascalCase"))]
+pub struct CourseDetails {
+    pub semester: String,
+    pub course_no: String,
+    pub course_name: String,
+    pub course_teacher: String,
+    #[serde_as(deserialize_as = "serde_with::DisplayFromStr")]
+    pub credit_point: f32,
+    #[serde_as(deserialize_as = "serde_with::DisplayFromStr")]
+    pub course_times: i32,
+    #[serde_as(deserialize_as = "serde_with::DisplayFromStr")]
+    pub practical_times: i32,
+    pub require_option: String,
+    pub all_year: String,
+    #[serde_as(deserialize_as = "serde_with::DisplayFromStr")]
+    pub choose_student: i32,
+    #[serde_as(deserialize_as = "serde_with::DisplayFromStr")]
+    pub three_student: i32,
+    #[serde_as(deserialize_as = "serde_with::DisplayFromStr")]
+    pub all_student: i32,
+    #[serde_as(deserialize_as = "serde_with::DisplayFromStr")]
+    pub restrict1: i32,
+    #[serde_as(deserialize_as = "serde_with::DisplayFromStr")]
+    pub restrict2: i32,
+    #[serde(rename(serialize = "ntuRestrict", deserialize = "NTURestrict"))]
+    #[serde_as(deserialize_as = "serde_with::DefaultOnError")]
+    pub nturestrict: i32,
+    #[serde(rename(serialize = "ntnuRestrict", deserialize = "NTNURestrict"))]
+    #[serde_as(deserialize_as = "serde_with::DefaultOnError")]
+    pub ntnurestrict: Option<i32>,
+    #[serde_as(deserialize_as = "serde_with::NoneAsEmptyString")]
+    pub class_room_no: Option<String>,
+    #[serde_as(deserialize_as = "serde_with::NoneAsEmptyString")]
+    pub core_ability: Option<String>,
+    #[serde(rename(deserialize = "CourseURL"))]
+    #[serde_as(deserialize_as = "serde_with::NoneAsEmptyString")]
+    pub course_url: Option<String>,
+    #[serde_as(deserialize_as = "serde_with::NoneAsEmptyString")]
+    pub course_object: Option<String>,
+    #[serde_as(deserialize_as = "serde_with::NoneAsEmptyString")]
+    pub course_content: Option<String>,
+    #[serde_as(deserialize_as = "serde_with::NoneAsEmptyString")]
+    pub course_textbook: Option<String>,
+    #[serde_as(deserialize_as = "serde_with::NoneAsEmptyString")]
+    pub course_refbook: Option<String>,
+    #[serde_as(deserialize_as = "serde_with::NoneAsEmptyString")]
+    pub course_note: Option<String>,
+    #[serde_as(deserialize_as = "serde_with::NoneAsEmptyString")]
+    pub course_grading: Option<String>,
+    #[serde_as(deserialize_as = "serde_with::NoneAsEmptyString")]
+    pub course_remark: Option<String>,
+    #[serde(rename(deserialize = "Instruction_1"))]
+    #[serde_as(deserialize_as = "Option<serde_with::DisplayFromStr>")]
+    pub instruction_1: Option<i32>,
+    #[serde(rename(deserialize = "Instruction_2"))]
+    #[serde_as(deserialize_as = "Option<serde_with::DisplayFromStr>")]
+    pub instruction_2: Option<i32>,
+    #[serde(rename(deserialize = "Instruction_3"))]
+    #[serde_as(deserialize_as = "Option<serde_with::DisplayFromStr>")]
+    pub instruction_3: Option<i32>,
+    #[serde(rename(deserialize = "Instruction_4"))]
+    #[serde_as(deserialize_as = "Option<serde_with::DisplayFromStr>")]
+    pub instruction_4: Option<i32>,
+    #[serde(rename(deserialize = "Instruction_other"))]
+    #[serde_as(deserialize_as = "serde_with::NoneAsEmptyString")]
+    pub instruction_other: Option<String>,
 }
 
-impl<'a> ClientBuilder<'a> {
-    pub fn new() -> Self {
-        ClientBuilder {
-            reqwest_builder: reqwest::ClientBuilder::new(),
+#[serde_as]
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all(serialize = "camelCase", deserialize = "PascalCase"))]
+pub struct SearchOptions {
+    pub semester: String,
+    pub course_no: String,
+    pub course_name: String,
+    pub course_teacher: String,
+    pub dimension: String,
+    pub course_notes: String,
+    #[serde_as(as = "BoolFromInt")]
+    pub foreign_language: bool,
+    #[serde_as(as = "BoolFromInt")]
+    pub only_general: bool,
+    #[serde_as(as = "BoolFromInt")]
+    #[serde(rename(serialize = "OnlyNTUST", deserialize = "OnleyNTUST"))]
+    // looks like a low-level naming mistake in the API
+    pub only_ntust: bool,
+    #[serde_as(as = "BoolFromInt")]
+    pub only_master: bool,
+    #[serde_as(as = "BoolFromInt")]
+    pub only_under_graduate: bool,
+    #[serde_as(as = "BoolFromInt")]
+    pub only_node: bool,
+    pub language: Language,
+}
 
-            user_agent: DEFAULT_USER_AGENT,
-            timeout: DEFAULT_TIMEOUT,
+impl SearchOptions {
+    pub fn new(semester: &str, language: Language) -> Self {
+        Self {
+            semester: semester.to_string(),
+            course_no: String::new(),
+            course_name: String::new(),
+            course_teacher: String::new(),
+            dimension: String::new(),
+            course_notes: String::new(),
+            foreign_language: false,
+            only_general: false,
+            only_ntust: false,
+            only_master: false,
+            only_under_graduate: false,
+            only_node: false,
+            language,
+        }
+    }
+}
+
+pub fn merge_courses(courses: Vec<CourseInfo>) -> Vec<CourseInfo> {
+    let mut course_map: HashMap<String, CourseInfo> = HashMap::new();
+
+    for course in courses.into_iter() {
+        course_map
+            .entry(course.course_no.clone())
+            .and_modify(|existing_course| {
+                if let Some(new_nodes) = &course.node {
+                    if let Some(existing_nodes) = &mut existing_course.node {
+                        existing_nodes.push(',');
+                        existing_nodes.push_str(new_nodes);
+                    } else {
+                        existing_course.node = Some(new_nodes.clone());
+                    }
+                }
+            })
+            .or_insert(course);
+    }
+
+    // ensure nodes are unique and in order
+    for course in course_map.values_mut() {
+        if let Some(nodes) = &mut course.node {
+            let mut nodes_vec: Vec<&str> = nodes.split(',').collect();
+            nodes_vec.sort();
+            nodes_vec.dedup();
+            *nodes = nodes_vec.join(",");
         }
     }
 
-    pub fn user_agent(mut self, user_agent: &'a str) -> Self {
-        self.user_agent = user_agent;
-        self
-    }
-
-    pub fn timeout(mut self, timeout: Duration) -> Self {
-        self.timeout = timeout;
-        self
-    }
-
-    pub fn local_address(mut self, addr: std::net::IpAddr) -> Self {
-        self.reqwest_builder = self.reqwest_builder.local_address(addr);
-        self
-    }
-
-    pub fn build(self) -> Result<Q, Box<dyn std::error::Error>> {
-        Ok(Q {
-            http_client: self
-                .reqwest_builder
-                .user_agent(self.user_agent)
-                .timeout(self.timeout)
-                .build()?,
-        })
-    }
+    course_map.into_values().collect()
 }
 
-pub struct Q {
-    http_client: reqwest::Client,
+pub fn default_reqwest_builder() -> reqwest::ClientBuilder {
+    reqwest::Client::builder()
+        .user_agent(DEFAULT_USER_AGENT)
+        .timeout(DEFAULT_TIMEOUT)
 }
 
-impl Q {
-    pub fn new() -> Self {
-        ClientBuilder::new().build().unwrap()
-    }
+#[derive(Debug, Clone)]
+pub enum QueryError {
+    InputError(String),
+    HttpError(String),
+    ParseError(String),
+}
 
-    pub async fn query(
-        &self,
-        semester: &str,
-        course_no: &str,
-        language: &str,
-    ) -> Result<CourseDetails, Box<dyn std::error::Error>> {
-        let mut params = HashMap::new();
-        params.insert("semester", semester);
-        params.insert("course_no", course_no);
-        params.insert("language", language);
+impl std::error::Error for QueryError {}
 
-        let resp = self
-            .http_client
-            .get("https://querycourse.ntust.edu.tw/querycourse/api/coursedetials")
-            .query(&params)
-            .send()
-            .await?
-            .json::<Vec<CourseDetails>>()
-            .await?;
-
-        if let Some(course_details) = resp.get(0) {
-            Ok(course_details.clone())
-        } else {
-            Err(Box::new(std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                "Failed to parse response data",
-            )))
+impl fmt::Display for QueryError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            QueryError::InputError(msg) => write!(f, "Input Error: {}", msg),
+            QueryError::HttpError(msg) => write!(f, "HTTP Error: {}", msg),
+            QueryError::ParseError(msg) => write!(f, "Parse Error: {}", msg),
         }
     }
 }
@@ -167,20 +258,65 @@ impl Q {
 mod tests {
     use super::*;
 
-    #[tokio::test]
-    async fn new() {
-        let _client = Q::new();
-    }
+    #[test]
+    fn merge_courses() {
+        let courses: Vec<CourseInfo> = vec![
+            CourseInfo {
+                semester: String::from("1131"),
+                course_no: String::from("CS1003302"),
+                course_name: String::from("計算機程式設計"),
+                course_teacher: String::from("金台齡"),
+                dimension: String::from(""),
+                credit_point: 3.0,
+                require_option: String::from("R"),
+                all_year: String::from("H"),
+                choose_student: 0,
+                restrict1: 9999,
+                restrict2: 53,
+                three_student: 0,
+                all_student: 0,
+                nturestrict: 0,
+                ntnurestrict: 0,
+                course_times: String::from("3"),
+                practical_times: String::from("0"),
+                class_room_no: None,
+                three_node: None,
+                node: Some(String::from("R1")),
+                contents: String::from("學號雙數／EMI課程／英語授課"),
+                ntu_people: 0,
+                ntnu_people: 0,
+                abroad_people: 0,
+            },
+            CourseInfo {
+                semester: String::from("1131"),
+                course_no: String::from("CS1003302"),
+                course_name: String::from("計算機程式設計"),
+                course_teacher: String::from("金台齡"),
+                dimension: String::from(""),
+                credit_point: 3.0,
+                require_option: String::from("R"),
+                all_year: String::from("H"),
+                choose_student: 0,
+                restrict1: 9999,
+                restrict2: 53,
+                three_student: 0,
+                all_student: 0,
+                nturestrict: 0,
+                ntnurestrict: 0,
+                course_times: String::from("3"),
+                practical_times: String::from("0"),
+                class_room_no: None,
+                three_node: None,
+                node: Some(String::from("T1,T2")),
+                contents: String::from("學號雙數／EMI課程／英語授課"),
+                ntu_people: 0,
+                ntnu_people: 0,
+                abroad_people: 0,
+            },
+        ];
 
-    #[tokio::test]
-    async fn query() {
-        let client = Q::new();
+        let merged_courses = crate::merge_courses(courses);
 
-        let _details = client
-            .query("1122", "AT2005701", "zh")
-            .await
-            .expect("Failed to query");
-
-        println!("{:#?}", _details)
+        println!("{:#?}", merged_courses);
     }
 }

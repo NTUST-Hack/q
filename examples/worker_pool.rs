@@ -6,21 +6,24 @@ use std::{
     time::Duration,
 };
 
+use q::QueryError;
 use tokio_task_pool::Pool;
 
 const SEMESTER: &'static str = "1122";
-const LANGUAGE: &'static str = "zh";
+const LANGUAGE: q::Language = q::Language::Zh;
 
-async fn worker(client: &q::Q, course_no: &str) {
-    let details = client.query(SEMESTER, course_no, LANGUAGE).await.unwrap();
+async fn worker(client: &q::Q, course_no: &str) -> Result<(), QueryError> {
+    let details = client.query(SEMESTER, course_no, LANGUAGE).await?;
     println!(
         "{: <10} | {:　<10} | {}/{}",
         details.course_no, details.course_name, details.choose_student, details.restrict2
     );
+
+    Ok(())
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> anyhow::Result<()> {
     const THREADS: usize = 64;
 
     let duration = Duration::from_secs(10);
@@ -66,7 +69,7 @@ async fn main() {
                     let c = clients_clone.get(i % THREADS).unwrap();
                     let no = courses_clone.get(i % courses_length).unwrap();
 
-                    worker(c, no).await;
+                    worker(c, no).await.unwrap();
 
                     times_clone.fetch_add(1, Ordering::Relaxed);
                 })
@@ -87,4 +90,6 @@ async fn main() {
         times.load(Ordering::Relaxed),
         duration
     );
+
+    Ok(())
 }
