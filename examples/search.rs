@@ -1,7 +1,7 @@
 use q::Q;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> anyhow::Result<()> {
     let c = Q::new();
 
     let mut options = q::SearchOptions::new("1131", q::Language::Zh);

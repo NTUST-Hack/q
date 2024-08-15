@@ -1,6 +1,6 @@
 use q::blocking::Q;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> anyhow::Result<()> {
     let c = Q::new();
 
     let details = c

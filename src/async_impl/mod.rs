@@ -1,52 +1,30 @@
 use std::collections::HashMap;
-use std::time::Duration;
 
 use crate::{
-    CourseDetails, CourseInfo, Language, QueryError, SearchOptions, DEFAULT_TIMEOUT,
-    DEFAULT_USER_AGENT,
+    default_reqwest_builder, CourseDetails, CourseInfo, Language, QueryError, SearchOptions,
 };
 
 #[derive(Default, Debug)]
-pub struct ClientBuilder<'a> {
-    reqwest_builder: reqwest::ClientBuilder,
-
-    user_agent: &'a str,
-    timeout: Duration,
+pub struct ClientBuilder {
+    reqwest_client: reqwest::Client,
 }
 
-impl<'a> ClientBuilder<'a> {
+impl ClientBuilder {
     pub fn new() -> Self {
         ClientBuilder {
-            reqwest_builder: reqwest::ClientBuilder::new(),
-
-            user_agent: DEFAULT_USER_AGENT,
-            timeout: DEFAULT_TIMEOUT,
+            reqwest_client: default_reqwest_builder().build().unwrap(),
         }
     }
 
-    pub fn user_agent(mut self, user_agent: &'a str) -> Self {
-        self.user_agent = user_agent;
+    pub fn reqwest_client(mut self, client: reqwest::Client) -> Self {
+        self.reqwest_client = client;
         self
     }
 
-    pub fn timeout(mut self, timeout: Duration) -> Self {
-        self.timeout = timeout;
-        self
-    }
-
-    pub fn local_address(mut self, addr: std::net::IpAddr) -> Self {
-        self.reqwest_builder = self.reqwest_builder.local_address(addr);
-        self
-    }
-
-    pub fn build(self) -> Result<Q, Box<dyn std::error::Error>> {
-        Ok(Q {
-            http_client: self
-                .reqwest_builder
-                .user_agent(self.user_agent)
-                .timeout(self.timeout)
-                .build()?,
-        })
+    pub fn build(self) -> Q {
+        Q {
+            http_client: self.reqwest_client,
+        }
     }
 }
 
@@ -56,7 +34,7 @@ pub struct Q {
 
 impl Q {
     pub fn new() -> Self {
-        ClientBuilder::new().build().unwrap()
+        ClientBuilder::new().build()
     }
 
     pub async fn search(

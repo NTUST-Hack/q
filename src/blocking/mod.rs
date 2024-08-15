@@ -1,42 +1,30 @@
-use std::time::Duration;
-
 pub use crate::CourseDetails;
 pub use crate::QueryError;
 use crate::{CourseInfo, Language, SearchOptions};
 
 use crate::async_impl;
 
-pub struct ClientBuilder<'a> {
-    async_builder: async_impl::ClientBuilder<'a>,
+pub struct ClientBuilder {
+    async_builder: async_impl::ClientBuilder,
 }
 
-impl<'a> ClientBuilder<'a> {
+impl ClientBuilder {
     pub fn new() -> Self {
         Self {
             async_builder: async_impl::ClientBuilder::new(),
         }
     }
 
-    pub fn user_agent(mut self, user_agent: &'a str) -> Self {
-        self.async_builder = self.async_builder.user_agent(&user_agent);
+    pub fn reqwest_client(mut self, client: reqwest::Client) -> Self {
+        self.async_builder = self.async_builder.reqwest_client(client);
         self
     }
 
-    pub fn timeout(mut self, timeout: Duration) -> Self {
-        self.async_builder = self.async_builder.timeout(timeout);
-        self
-    }
-
-    pub fn local_address(mut self, addr: std::net::IpAddr) -> Self {
-        self.async_builder = self.async_builder.local_address(addr);
-        self
-    }
-
-    pub fn build(self) -> Result<Q, Box<dyn std::error::Error>> {
-        Ok(Q {
-            async_q: self.async_builder.build()?,
+    pub fn build(self) -> Q {
+        Q {
+            async_q: self.async_builder.build(),
             runtime: tokio::runtime::Runtime::new().unwrap(),
-        })
+        }
     }
 }
 
@@ -47,7 +35,7 @@ pub struct Q {
 
 impl Q {
     pub fn new() -> Self {
-        ClientBuilder::new().build().unwrap()
+        ClientBuilder::new().build()
     }
 
     pub fn search(

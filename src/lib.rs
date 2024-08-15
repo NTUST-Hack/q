@@ -228,6 +228,12 @@ pub fn merge_courses(courses: Vec<CourseInfo>) -> Vec<CourseInfo> {
     course_map.into_values().collect()
 }
 
+pub fn default_reqwest_builder() -> reqwest::ClientBuilder {
+    reqwest::Client::builder()
+        .user_agent(DEFAULT_USER_AGENT)
+        .timeout(DEFAULT_TIMEOUT)
+}
+
 #[derive(Debug, Clone)]
 pub enum QueryError {
     HttpError(String),
