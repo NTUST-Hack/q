@@ -1,18 +1,23 @@
 use std::collections::HashMap;
 
+use url::Url;
+
 use crate::{
     default_reqwest_builder, CourseDetails, CourseInfo, Language, QueryError, SearchOptions,
+    DEFAULT_API_URL,
 };
 
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct ClientBuilder {
     reqwest_client: reqwest::Client,
+    base_url: Url,
 }
 
 impl ClientBuilder {
     pub fn new() -> Self {
         ClientBuilder {
             reqwest_client: default_reqwest_builder().build().unwrap(),
+            base_url: Url::parse(&DEFAULT_API_URL).unwrap(),
         }
     }
 
@@ -21,15 +26,22 @@ impl ClientBuilder {
         self
     }
 
+    pub fn api_url(mut self, url: Url) -> Self {
+        self.base_url = url;
+        self
+    }
+
     pub fn build(self) -> Q {
         Q {
             http_client: self.reqwest_client,
+            base_url: self.base_url,
         }
     }
 }
 
 pub struct Q {
     http_client: reqwest::Client,
+    base_url: Url,
 }
 
 impl Q {
@@ -42,13 +54,9 @@ impl Q {
         options: &SearchOptions,
         merge_courses: bool,
     ) -> Result<Vec<CourseInfo>, QueryError> {
-        let resp = match self
-            .http_client
-            .post("https://querycourse.ntust.edu.tw/querycourse/api/courses")
-            .json(&options)
-            .send()
-            .await
-        {
+        let url = self.base_url.join("courses").unwrap();
+
+        let resp = match self.http_client.post(url).json(&options).send().await {
             Ok(resp) => resp,
             Err(e) => return Err(QueryError::HttpError(format!("{}", e))),
         };
@@ -69,18 +77,16 @@ impl Q {
         course_no: &str,
         language: Language,
     ) -> Result<CourseDetails, QueryError> {
+        // is "coursedetials" not "coursedetails"
+        // looks like an idiotic typo in the API
+        let url = self.base_url.join("coursedetials").unwrap();
+
         let mut params = HashMap::new();
         params.insert("semester", semester);
         params.insert("course_no", course_no);
         params.insert("language", language.as_str());
 
-        let resp = match self
-            .http_client
-            .get("https://querycourse.ntust.edu.tw/querycourse/api/coursedetials")
-            .query(&params)
-            .send()
-            .await
-        {
+        let resp = match self.http_client.get(url).query(&params).send().await {
             Ok(resp) => resp,
             Err(e) => return Err(QueryError::HttpError(format!("{}", e))),
         };
@@ -91,12 +97,10 @@ impl Q {
         };
 
         // # debug
-
         // let text = match String::from_utf8(full.to_vec()) {
         //     Ok(bytes) => bytes,
         //     Err(e) => return Err(QueryError::ParseError(format!("{}", e))),
         // };
-
         // println!("{}", text);
 
         let json = match serde_json::from_slice::<Vec<CourseDetails>>(&full) {

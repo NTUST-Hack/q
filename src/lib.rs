@@ -8,6 +8,7 @@ use std::{collections::HashMap, fmt, str::FromStr, time::Duration};
 
 pub const DEFAULT_USER_AGENT: &'static str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36";
 pub const DEFAULT_TIMEOUT: Duration = Duration::from_secs(10);
+pub const DEFAULT_API_URL: &'static str = "https://querycourse.ntust.edu.tw/querycourse/api/";
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -236,6 +237,7 @@ pub fn default_reqwest_builder() -> reqwest::ClientBuilder {
 
 #[derive(Debug, Clone)]
 pub enum QueryError {
+    InputError(String),
     HttpError(String),
     ParseError(String),
 }
@@ -245,6 +247,7 @@ impl std::error::Error for QueryError {}
 impl fmt::Display for QueryError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
+            QueryError::InputError(msg) => write!(f, "Input Error: {}", msg),
             QueryError::HttpError(msg) => write!(f, "HTTP Error: {}", msg),
             QueryError::ParseError(msg) => write!(f, "Parse Error: {}", msg),
         }

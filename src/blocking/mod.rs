@@ -20,6 +20,11 @@ impl ClientBuilder {
         self
     }
 
+    pub fn api_url(mut self, url: url::Url) -> Self {
+        self.async_builder = self.async_builder.api_url(url);
+        self
+    }
+
     pub fn build(self) -> Q {
         Q {
             async_q: self.async_builder.build(),
